@@ -14,20 +14,13 @@ type ApiResponse struct {
 }
 
 func main() {
-	apiResponse := ApiResponse{
-		Message: "Berhasil mengambil data",
-		Status:  "OK",
-		Code:    http.StatusOK,
-		Data: gin.H{
-			"id":   1,
-			"name": "ilham",
-			"nim":  "123321",
-		},
-	}
-
 	router := gin.Default()
-	router.GET("/test", func(c *gin.Context) {
-		c.JSON(http.StatusOK, apiResponse)
+	router.GET("/alamat", func(c *gin.Context) {
+		alamat := c.Query("search")
+		c.String(http.StatusOK, "Alamat oke %s", alamat)
 	})
-	router.Run("localhost:2000")
+	err := router.Run(":3000")
+	if err != nil {
+		return
+	}
 }
