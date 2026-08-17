@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Form Gin</title>
+  </head>
+  <body style="font-family: sans-serif; padding: 20px">
+    <h2>Test c.PostForm Gin</h2>
+    <form action="/query_post" method="POST">
+      <div>
+        <label for="name">Message:</label>
+        <input
+          type="text"
+          id="message"
+          name="message"
+          placeholder="Masukkan message..."
+          required
+        />
+      </div>
+      <br />
+      <button type="submit">Kirim Data</button>
+    </form>
+  </body>
+</html>
