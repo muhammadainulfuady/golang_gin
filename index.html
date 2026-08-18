@@ -7,15 +7,16 @@
   </head>
   <body style="font-family: sans-serif; padding: 20px">
     <h2>Test c.PostForm Gin</h2>
-    <form action="/query_post" method="POST">
+    <form action="/uploads" method="POST" enctype="multipart/form-data">
       <div>
-        <label for="name">Message:</label>
+        <label for="name">File:</label>
         <input
-          type="text"
-          id="message"
-          name="message"
-          placeholder="Masukkan message..."
-          required
+          type="file"
+          id="file"
+          name="file"
+          accept=".jpg, .jpeg, .png"
+          placeholder="Masukkan file..."
+          multiple
         />
       </div>
       <br />
