@@ -20,6 +20,66 @@ type ApiResponse struct {
 }
 
 func main() {
+	router := gin.Default()
+	router.MaxMultipartMemory = 1 << 20
+
+	setupRoutes(router)
+
+	err := router.Run(":3000")
+	if err != nil {
+		return
+	}
+}
+
+func setupRoutes(router *gin.Engine) {
+	router.GET("/", getBooks)
+	router.GET("/form", getForm)
+	router.POST("/users", createUser)
+	router.POST("/form_post", postForm)
+	router.POST("/query_post", queryPost)
+	router.POST("/query_map", queryMapHandler)
+	router.POST("/upload", uploadFile)
+	router.POST("/uploads", uploadHandler)
+
+	// tanpa middleware
+	{
+		v1 := router.Group("/api/v1")
+		v1.GET("/login", loginEndpoint)
+		v1.GET("/submit", submitEndpoint)
+		v1.GET("/read", readEndpoint)
+
+	}
+
+	// dengan middleware
+	v2 := router.Group("/api/v2")
+	v2.Use(AuthMiddleware())
+	{
+		v2.GET("/login", loginEndpoint)
+		v2.GET("/submit", submitEndpoint)
+		v2.GET("/read", readEndpoint)
+	}
+
+	// nested route
+	api := router.Group("/api")
+	{
+		v3 := api.Group("/v3")
+		{
+			v3.GET("/login", loginEndpoint)
+			v3.GET("/submit", submitEndpoint)
+			v3.GET("/read", readEndpoint)
+			v3.GET("/users/:name", getUserByName)
+		}
+	}
+}
+
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		messageFrom(c, "dari middlewara bolo")
+		c.Next()
+	}
+}
+
+func getBooks(c *gin.Context) {
 	apiResponse := ApiResponse{
 		Message: "Berhasil mengambil data buku",
 		Status:  "OK",
@@ -42,101 +102,90 @@ func main() {
 			},
 		},
 	}
-	router := gin.Default()
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, apiResponse)
+	c.JSON(http.StatusOK, apiResponse)
+}
+
+func getForm(c *gin.Context) {
+	c.File("./index.html")
+}
+
+func createUser(c *gin.Context) {
+	name := c.PostForm("name")
+	c.JSON(http.StatusCreated, gin.H{
+		"user": name,
 	})
+}
 
-	router.GET("/form", func(c *gin.Context) {
-		c.File("./index.html")
+func postForm(c *gin.Context) {
+	message := c.PostForm("message")
+	nick := c.DefaultPostForm("message", "anonymus")
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "posted",
+		"message": message,
+		"nick":    nick,
 	})
+}
 
-	router.POST("/users", func(c *gin.Context) {
-		name := c.PostForm("name")
-		c.JSON(http.StatusCreated, gin.H{
-			"user": name,
-		})
+func queryPost(c *gin.Context) {
+	name := c.Query("name")
+	message := c.PostForm("message")
+	c.String(http.StatusCreated, "Halo %s dari query\nHalo %s dari message", name, message)
+}
+
+func queryMapHandler(c *gin.Context) {
+	category_filter := c.QueryMap("category_filter")
+	c.JSON(http.StatusCreated, gin.H{
+		"category_filter": category_filter,
 	})
+}
 
-	router.POST("/form_post", func(c *gin.Context) {
-		message := c.PostForm("message")
-		nick := c.DefaultPostForm("message", "anonymus")
-
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "posted",
-			"message": message,
-			"nick":    nick,
-		})
-	})
-
-	router.POST("/query_post", func(c *gin.Context) {
-		name := c.Query("name")
-		message := c.PostForm("message")
-		c.String(http.StatusCreated, "Halo %s dari query\nHalo %s dari message", name, message)
-	})
-
-	router.POST("/query_map", func(c *gin.Context) {
-		category_filter := c.QueryMap("category_filter")
-		c.JSON(http.StatusCreated, gin.H{
-			"category_filter": category_filter,
-		})
-	})
-
-	router.POST("/upload", func(c *gin.Context) {
-		file, err := c.FormFile("file")
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"err": err.Error(),
-			})
-			return
-		}
-
-		// src, err := file.Open()
-		// if err != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"err": "server err",
-		// 	})
-		// 	return
-		// }
-		// defer src.Close()
-
-		// buffer := make([]byte, 512)
-		// _, err = src.Read(buffer)
-		// if err != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"error": "Gagal membaca isi file",
-		// 	})
-		// 	return
-		// }
-
-		// realContentType := http.DetectContentType(buffer)
-		// allowedType := map[string]bool{
-		// 	"image/jpeg": true,
-		// 	"image/jpg":  true,
-		// 	"image/png":  true,
-		// 	"image/webp": true,
-		// }
-
-		// if !allowedType[c.ContentType()] {
-		// 	c.JSON(http.StatusBadRequest, gin.H{
-		// 		"error": "File palsu terdeteksi! Tipe asli: " + realContentType,
-		// 	})
-		// 	return
-		// }
-		// c:/users/Asus/index.png
-
-		dst := filepath.Join("./uploadd/file", filepath.Base(file.Filename))
-		c.SaveUploadedFile(file, dst)
-		c.String(http.StatusOK, fmt.Sprintf("'%s' uploaded!", file.Filename))
-	})
-
-	router.MaxMultipartMemory = 1 << 20
-	router.POST("/uploads", uploadHandler)
-
-	err := router.Run(":3000")
+func uploadFile(c *gin.Context) {
+	file, err := c.FormFile("file")
 	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"err": err.Error(),
+		})
 		return
 	}
+
+	// src, err := file.Open()
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{
+	// 		"err": "server err",
+	// 	})
+	// 	return
+	// }
+	// defer src.Close()
+
+	// buffer := make([]byte, 512)
+	// _, err = src.Read(buffer)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{
+	// 		"error": "Gagal membaca isi file",
+	// 	})
+	// 	return
+	// }
+
+	// realContentType := http.DetectContentType(buffer)
+	// allowedType := map[string]bool{
+	// 	"image/jpeg": true,
+	// 	"image/jpg":  true,
+	// 	"image/png":  true,
+	// 	"image/webp": true,
+	// }
+
+	// if !allowedType[c.ContentType()] {
+	// 	c.JSON(http.StatusBadRequest, gin.H{
+	// 		"error": "File palsu terdeteksi! Tipe asli: " + realContentType,
+	// 	})
+	// 	return
+	// }
+	// c:/users/Asus/index.png
+
+	dst := filepath.Join("./uploadd/file", filepath.Base(file.Filename))
+	c.SaveUploadedFile(file, dst)
+	c.String(http.StatusOK, fmt.Sprintf("'%s' uploaded!", file.Filename))
 }
 
 func uploadHandler(c *gin.Context) {
@@ -165,4 +214,31 @@ func uploadHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "upload successful",
 	})
+}
+
+func messageFrom(c *gin.Context, messageTo string) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": &messageTo,
+	})
+}
+
+func loginEndpoint(c *gin.Context) {
+	messageFrom(c, "login")
+}
+
+func submitEndpoint(c *gin.Context) {
+	messageFrom(c, "submit")
+}
+
+func readEndpoint(c *gin.Context) {
+	messageFrom(c, "read")
+}
+
+func getUserByName(c *gin.Context) {
+	name := c.Param("name")
+	messageFrom(c, name)
+}
+
+func redirectGoogle(c *gin.Context) {
+	c.Redirect(http.StatusMovedPermanently, "google.com")
 }
