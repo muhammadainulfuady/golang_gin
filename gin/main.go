@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -17,6 +18,11 @@ type ApiResponse struct {
 	Status  string `json:"status"`
 	Code    int    `json:"code"`
 	Data    any    `json:"data"`
+}
+
+type Login struct {
+	User     string `form:"user" json:"user" xml:"user"  binding:"required"`
+	Password string `form:"password" json:"password" xml:"password" binding:"required"`
 }
 
 func main() {
@@ -40,6 +46,8 @@ func setupRoutes(router *gin.Engine) {
 	router.POST("/query_map", queryMapHandler)
 	router.POST("/upload", uploadFile)
 	router.POST("/uploads", uploadHandler)
+	router.POST("/bindig", modelBindingJson)
+	router.POST("/encode", modelBindingJsonDecodeEncode)
 
 	// tanpa middleware
 	{
@@ -239,6 +247,45 @@ func getUserByName(c *gin.Context) {
 	messageFrom(c, name)
 }
 
-func redirectGoogle(c *gin.Context) {
-	c.Redirect(http.StatusMovedPermanently, "google.com")
+func modelBindingJson(c *gin.Context) {
+	var json Login
+	if err := c.ShouldBind(&json); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	if json.User != "manu" || json.Password != "123" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "unauthorized",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "selamat anda login loh yah"})
+}
+
+func modelBindingJsonDecodeEncode(c *gin.Context) {
+	var loginJSON Login
+
+	decoder := json.NewDecoder(c.Request.Body)
+	err := decoder.Decode(&loginJSON)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"err": err.Error(),
+		})
+		return
+	}
+
+	if loginJSON.User != "ilham" || loginJSON.Password != "123" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "username dan password salah",
+		})
+		return
+	}
+
+	c.Writer.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(c.Writer)
+	encoder.Encode(gin.H{
+		"status": "login sukses bolo",
+	})
 }
