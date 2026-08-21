@@ -46,7 +46,7 @@ func setupRoutes(router *gin.Engine) {
 	router.POST("/query_map", queryMapHandler)
 	router.POST("/upload", uploadFile)
 	router.POST("/uploads", uploadHandler)
-	router.POST("/bindig", modelBindingJson)
+	router.POST("/binding", modelBindingJson)
 	router.POST("/encode", modelBindingJsonDecodeEncode)
 
 	// tanpa middleware
@@ -249,7 +249,7 @@ func getUserByName(c *gin.Context) {
 
 func modelBindingJson(c *gin.Context) {
 	var json Login
-	if err := c.ShouldBind(&json); err != nil {
+	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
