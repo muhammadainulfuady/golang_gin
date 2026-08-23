@@ -48,6 +48,7 @@ func setupRoutes(router *gin.Engine) {
 	router.POST("/uploads", uploadHandler)
 	router.POST("/binding", modelBindingJson)
 	router.POST("/encode", modelBindingJsonDecodeEncode)
+	router.Any("/testing", onlyBindQuery)
 
 	// tanpa middleware
 	{
@@ -287,5 +288,26 @@ func modelBindingJsonDecodeEncode(c *gin.Context) {
 	encoder := json.NewEncoder(c.Writer)
 	encoder.Encode(gin.H{
 		"status": "login sukses bolo",
+	})
+}
+
+type Person struct {
+	Name   string `form:"name" binding:"required"`
+	Addres string `form:"address"`
+}
+
+func onlyBindQuery(c *gin.Context) {
+	var person Person
+	if err := c.ShouldBindQuery(&person); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"err message": err.Error(),
+		})
+		return
+	}
+
+
+	c.JSON(http.StatusOK, gin.H{
+		"name":   person.Name,
+		"addres": person.Addres,
 	})
 }
