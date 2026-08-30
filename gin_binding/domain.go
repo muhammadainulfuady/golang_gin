@@ -5,7 +5,7 @@ type Person struct {
 	Addres string `form:"address"`
 }
 
-type Persons struct {
+type BindinPerson struct {	
 	Name      string    `form:"name,default=ilham"`
 	Age       int       `form:"age,default=20"`
 	Friends   []string  `form:"friends,default=ilham;ramadan"`
