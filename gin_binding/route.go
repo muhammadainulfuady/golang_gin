@@ -6,4 +6,5 @@ func SetupRoutes(router *gin.Engine) {
 	router.GET("/query-person", queryStringBinding)
 	router.GET("/form", formViews)
 	router.POST("/default-person", defaultValudeBinding)
+	router.GET("/:name/:id", uriBinding)
 }

@@ -16,6 +16,10 @@ func defaultValudeBinding(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"name": persons.Name,
+		"name":      persons.Name,
+		"addresses": persons.Addresses,
+		"age":       persons.Age,
+		"friends":   persons.Friends,
+		"laptimes":  persons.LapTimes,
 	})
 }

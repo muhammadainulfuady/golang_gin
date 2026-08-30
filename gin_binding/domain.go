@@ -5,7 +5,7 @@ type Person struct {
 	Addres string `form:"address"`
 }
 
-type BindinPerson struct {	
+type BindinPerson struct {
 	Name      string    `form:"name,default=ilham"`
 	Age       int       `form:"age,default=20"`
 	Friends   []string  `form:"friends,default=ilham;ramadan"`
@@ -18,4 +18,9 @@ type ApiResponse struct {
 	Message string
 	Status  string
 	Data    any
+}
+
+type UriPerson struct {
+	ID   string `uri:"id" binding:"required"`
+	Name string `uri:"name" binding:"required"`
 }
