@@ -9,4 +9,5 @@ func SetupRoutes(router *gin.Engine) {
 	router.GET("/form", formViews)
 	router.POST("/default-person", defaultValudeBinding)
 	router.GET("/:name/:id", UriBinding)
+	router.GET("/bindHeader", BindHeader)
 }

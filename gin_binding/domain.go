@@ -24,3 +24,8 @@ type UriPerson struct {
 	ID   string `uri:"id" binding:"required"`
 	Name string `uri:"name" binding:"required"`
 }
+
+type TestHeader struct {
+	Rate   int    `header:"Rate"`
+	Domain string `header:"Domain"`
+}
