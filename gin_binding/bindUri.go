@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func uriBinding(c *gin.Context) {
+func UriBinding(c *gin.Context) {
 	var person UriPerson
 	if err := c.ShouldBindUri(&person); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
